@@ -28,6 +28,23 @@ LANDER_SECTOR = random.randint(1, 24)
 LANDER_X = random.randint(2, 11)
 LANDER_Y = random.randint(2, 11)
 
+TILE_SIZE = 30
+
+player_y, player_x = 2, 5
+game_over = False
+
+PLAYER = {
+    "left": [images.spacesuit_left, images.spacesuit_left_1, images.spacesuit_left_2, images.spacesuit_left_3, images.spacesuit_left_4],
+    "right": [images.spacesuit_right, images.spacesuit_right_1, images.spacesuit_right_2, images.spacesuit_right_3, images.spacesuit_right_4],
+    "up": [images.spacesuit_back, images.spacesuit_back_1, images.spacesuit_back_2, images.spacesuit_back_3, images.spacesuit_back_4],
+    "down": [images.spacesuit_front, images.spacesuit_front_1, images.spacesuit_front_2, images.spacesuit_front_3, images.spacesuit_front_4]
+    }
+
+player_direction = "down"
+player_frame = 0
+player_image = PLAYER[player_direction][player_frame]
+player_offset_x, player_offset_y = 0, 0
+
 #############
 ##   MAP   ##
 #############
@@ -91,7 +108,7 @@ objects = {
     10: [images.cabinet, images.half_shadow, "A small locker, for storing personal items."],
     11: [images.desk_computer, images.half_shadow, "A computer. Use it to run life support diagnostics."],
     12: [images.plant, images.plant_shadow, "A spaceberry plant, grown here."],
-        13: [images.electrical1, images.half_shadow,
+    13: [images.electrical1, images.half_shadow,
          "Electrical systems used for powering the space station"],
     14: [images.electrical2, images.half_shadow,
          "Electrical systems used for powering the space station"],
@@ -224,6 +241,82 @@ items_player_may_carry = list(range(53, 82))
 # Numbers below are for floor, pressure pad, soil, toxic floor.
 items_player_may_stand_on = items_player_may_carry + [0, 39, 2, 48]
 
+###############
+##  SCENERY  ##
+###############
+
+# Scenery describes objects that cannot move between rooms.
+# room number: [[object number, y position, x position]...]
+scenery = {
+    26: [[39,8,2]],
+    27: [[33,5,5], [33,1,1], [33,1,8], [47,5,2],
+         [47,3,10], [47,9,8], [42,1,6]],
+    28: [[27,0,3], [41,4,3], [41,4,7]],
+    29: [[7,2,6], [6,2,8], [12,1,13], [44,0,1],
+         [36,4,10], [10,1,1], [19,4,2], [17,4,4]],
+    30: [[34,1,1], [35,1,3]],
+    31: [[11,1,1], [19,1,8], [46,1,3]],
+    32: [[48,2,2], [48,2,3], [48,2,4], [48,3,2], [48,3,3],
+         [48,3,4], [48,4,2], [48,4,3], [48,4,4]],
+    33: [[13,1,1], [13,1,3], [13,1,8], [13,1,10], [48,2,1],
+         [48,2,7], [48,3,6], [48,3,3]],
+    34: [[37,2,2], [32,6,7], [37,10,4], [28,5,3]],
+    35: [[16,2,9], [16,2,2], [16,3,3], [16,3,8], [16,8,9], [16,8,2], [16,1,8],
+         [16,1,3], [12,8,6], [12,9,4], [12,9,8],
+         [15,4,6], [12,7,1], [12,7,11]],
+    36: [[4,3,1], [9,1,7], [8,1,8], [8,1,9],
+         [5,5,4], [6,5,7], [10,1,1], [12,1,2]],
+    37: [[48,3,1], [48,3,2], [48,7,1], [48,5,2], [48,5,3],
+         [48,7,2], [48,9,2], [48,9,3], [48,11,1], [48,11,2]],
+    38: [[43,0,2], [6,2,2], [6,3,5], [6,4,7], [6,2,9], [45,1,10]],
+    39: [[38,1,1], [7,3,4], [7,6,4], [5,3,6], [5,6,6],
+         [6,3,9], [6,6,9], [45,1,11], [12,1,8], [12,1,4]], 
+    40: [[41,5,3], [41,5,7], [41,9,3], [41,9,7],
+         [13,1,1], [13,1,3], [42,1,12]],
+    41: [[4,3,1], [10,3,5], [4,5,1], [10,5,5], [4,7,1],
+         [10,7,5], [12,1,1], [12,1,5]],
+    44: [[46,4,3], [46,4,5], [18,1,1], [19,1,3],
+         [19,1,5], [52,4,7], [14,1,8]],
+    45: [[48,2,1], [48,2,2], [48,3,3], [48,3,4], [48,1,4], [48,1,1]],
+    46: [[10,1,1], [4,1,2], [8,1,7], [9,1,8], [8,1,9], [5,4,3], [7,3,2]],
+    47: [[9,1,1], [9,1,2], [10,1,3], [12,1,7], [5,4,4], [6,4,7], [4,1,8]],
+    48: [[17,4,1], [17,4,2], [17,4,3], [17,4,4], [17,4,5], [17,4,6], [17,4,7],
+         [17,8,1], [17,8,2], [17,8,3], [17,8,4],
+         [17,8,5], [17,8,6], [17,8,7], [14,1,1]],
+    49: [[14,2,2], [14,2,4], [7,5,1], [5,5,3], [48,3,3], [48,3,4]], 
+    50: [[45,4,8], [11,1,1], [13,1,8], [33,2,1], [46,4,6]] 
+    }
+
+# Scenery validation
+checksum = 0
+check_counter = 0
+for key, room_scenery_list in scenery.items():
+    for scenery_item_list in room_scenery_list:
+        checksum += (scenery_item_list[0] * key + scenery_item_list[1] * (key + 1) + scenery_item_list[2] * (key + 2))
+        check_counter += 1
+print(check_counter, "scenery items")
+assert check_counter == 161, "Expected 161 scenery items"
+assert checksum == 200095, "Error in scenery data"
+print("Scenery checksum: " + str(checksum))
+
+# Add random scenery in planet locations.
+for room in range(1, 26): 
+    if room != 13: # Skip room 13
+        scenery_item = random.choice([16, 28, 29, 30])
+        scenery[room] = [[scenery_item, random.randint(2, 10), random.randint(2, 10)]]
+
+# Use loops to add fences to the planet surface rooms
+for room_coordinate in range(0, 13):
+    for room_number in [1, 2, 3, 4, 5]: # Add top fence
+        scenery[room_number] += [[31, 0, room_coordinate]]
+    for room_number in [1, 6, 11, 16, 21]: # Add left fence
+        scenery[room_number] += [[31, room_coordinate, 0]]
+    for room_number in [5, 10, 15, 20, 25]: # Add right fence
+        scenery[room_number] += [[31, room_coordinate, 12]]
+
+del scenery[21][-1] # Delete last fence panel in Room 21
+del scenery[25][-1] # Delete last fence panel in Room 25
+
 #################
 ##   MAKE MAP  ##
 #################
@@ -294,6 +387,136 @@ def generate_map():
             room_map[room_height - 1][middle_column + 1] = floor_type
             room_map[room_height - 1][middle_column - 1] = floor_type
 
+    if current_room in scenery:
+        for this_scenery in scenery[current_room]:
+            scenery_number = this_scenery[0]
+            scenery_y = this_scenery[1]
+            scenery_x = this_scenery[2]
+            room_map[scenery_y][scenery_x] = scenery_number
+
+            image_here = objects[scenery_number][0]
+            image_width = image_here.get_width()
+            image_width_in_tiles = int(image_width / TILE_SIZE)
+
+            for tile_number in range(1, image_width_in_tiles):
+                room_map[scenery_y][scenery_x + tile_number] = 255
+
+#################
+##  GAME LOOP  ##
+#################
+
+def game_loop():
+    global player_x, player_y, current_room
+    global from_player_x, from_player_y
+    global player_image, player_image_shadow
+    global selected_item, item_carrying, energy
+    global player_offset_x, player_offset_y
+    global player_frame, player_direction
+
+    if game_over:
+        return
+
+    if player_frame > 0:
+        player_frame +=1
+        time.sleep(0.05)
+        if player_frame == 5:
+            player_frame = 0
+            player_offset_x = 0
+            player_offset_y = 0
+
+    # Save player's current position
+    old_player_x = player_x
+    old_player_y = player_y
+
+    # Move if key is pressed
+    if player_frame == 0:
+        if keyboard.right:
+            from_player_x = player_x
+            from_player_y = player_y
+            player_x += 1
+            player_direction = "right"
+            player_frame = 1
+        elif keyboard.left:
+            from_player_x = player_x
+            from_player_y = player_y
+            player_x -= 1
+            player_direction = "left"
+            player_frame = 1
+        elif keyboard.up:
+            from_player_x = player_x
+            from_player_y = player_y
+            player_y -= 1
+            player_direction = "up"
+            player_frame = 1
+        elif keyboard.down:
+            from_player_x = player_x
+            from_player_y = player_y
+            player_y += 1
+            player_direction = "down"
+            player_frame = 1
+
+    # Check for exiting the room
+    # Through door on right
+    if player_x == room_width:
+        #clock.unschedule(hazard_move)
+        current_room += 1
+        generate_map()
+        player_x = 0 # Enter at left
+        player_y = int(room_height / 2) # Enter at door
+        player_frame = 0
+        #start_room()
+        return
+
+    # Through door on left
+    if player_x == -1:
+        #clock.unschedule(hazard_move)
+        current_room -= 1
+        generate_map()
+        player_x = room_width - 1 # Enter at right
+        player_y = int(room_height / 2) # Enter at door
+        player_frame = 0
+        #start_room()
+        return
+
+    # Through door on bottom
+    if player_y == room_height:
+        #clock.unschedule(hazard_move)
+        current_room += MAP_WIDTH
+        generate_map()
+        player_y = 0 # Enter at top
+        player_x = int(room_width / 2) # Enter at door
+        player_frame = 0
+        #start_room()
+        return
+
+    # Through door at top
+    if player_y == -1:
+        #clock.unschedule(hazard_move)
+        current_room -= MAP_WIDTH
+        generate_map()
+        player_y = room_height - 1 # Enter at bottom
+        player_x = int(room_width / 2) # Enter at door
+        player_frame = 0
+        #start_room()
+        return
+
+
+    # If the player is standing somewhere they shouldn't, move them back.
+    if room_map[player_y][player_x] not in items_player_may_stand_on: # or hazard_map[player_y][player_x] != 0:
+        player_x = old_player_x
+        player_y = old_player_y
+        player_frame = 0
+
+    if player_direction == "right" and player_frame > 0:
+        player_offset_x = -1 + (0.25 * player_frame)
+    if player_direction == "left" and player_frame > 0:
+        player_offset_x = 1 - (0.25 * player_frame)
+    if player_direction == "up" and player_frame > 0:
+        player_offset_y = 1 - (0.25 * player_frame)
+    if player_direction == "down" and player_frame > 0:
+        player_offset_y = -1 + (0.25 * player_frame)
+
+
 ################
 ##  EXPLORER  ##
 ################
@@ -306,32 +529,16 @@ def draw():
 
     for y in range(room_height):
         for x in range(room_width):
-            image_to_draw = objects[room_map[y][x]][0]
-            screen.blit(image_to_draw, (top_left_x + (x * 30), top_left_y + (y * 30) - image_to_draw.get_height()))
+            if room_map[y][x] != 255:
+                image_to_draw = objects[room_map[y][x]][0]
+                screen.blit(image_to_draw, (top_left_x + (x * 30), top_left_y + (y * 30) - image_to_draw.get_height()))
+        if player_y == y:
+            image_to_draw = PLAYER[player_direction][player_frame]
+            screen.blit(image_to_draw,
+                        (top_left_x + (player_x * 30) + (player_offset_x * 30),
+                         top_left_y + (player_y * 30) + (player_offset_y * 30) - image_to_draw.get_height()))
 
-def movement():
-    global current_room
-    old_room = current_room
-
-    if keyboard.left:
-        current_room -= 1
-    if keyboard.right:
-        current_room += 1
-    if keyboard.up:
-        current_room -= MAP_WIDTH
-    if keyboard.down:
-        current_room += MAP_WIDTH
-
-    if current_room > 50:
-        current_room = 50
-    if current_room < 1:
-        current_room = 1
-
-    if current_room != old_room:
-        print("Entering room:" + str(current_room))
-
-clock.schedule_interval(movement, 0.1)
-
+clock.schedule_interval(game_loop, 0.03)
 
 
 pgzrun.go()

@@ -102,3 +102,5 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/.vs/Python-Project-4-Mission-Python/v16/Browse.VC.db
+/.vs/Python-Project-4-Mission-Python/v16/Browse.VC.opendb
