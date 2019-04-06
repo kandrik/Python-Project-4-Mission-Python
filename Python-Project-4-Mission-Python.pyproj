@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9902d4a8-5c9b-4711-92fb-25d7aaf4ab8d}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>escape.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="images\access_card.png" />
+    <Content Include="images\astronaut.png" />
+    <Content Include="images\backdrop.jpg" />
+    <Content Include="images\bed.png" />
+    <Content Include="images\bin_empty.png" />
+    <Content Include="images\bin_full.png" />
+    <Content Include="images\book.png" />
+    <Content Include="images\bookcase_small.png" />
+    <Content Include="images\bookcase_tall.png" />
+    <Content Include="images\bubble_gum.png" />
+    <Content Include="images\button.png" />
+    <Content Include="images\button_shadow.png" />
+    <Content Include="images\cabinet.png" />
+    <Content Include="images\cactus.png" />
+    <Content Include="images\cactus_shadow.png" />
+    <Content Include="images\canister.png" />
+    <Content Include="images\chair_left.png" />
+    <Content Include="images\chair_right.png" />
+    <Content Include="images\clipboard.png" />
+    <Content Include="images\computer.png" />
+    <Content Include="images\computer_shadow.png" />
+    <Content Include="images\contraption.png" />
+    <Content Include="images\contraption_shadow.png" />
+    <Content Include="images\crater.png" />
+    <Content Include="images\credit.png" />
+    <Content Include="images\desk_computer.png" />
+    <Content Include="images\door.png" />
+    <Content Include="images\door1.png" />
+    <Content Include="images\door1_shadow.png" />
+    <Content Include="images\door2.png" />
+    <Content Include="images\door2_shadow.png" />
+    <Content Include="images\door3.png" />
+    <Content Include="images\door3_shadow.png" />
+    <Content Include="images\door4.png" />
+    <Content Include="images\door4_shadow.png" />
+    <Content Include="images\door_shadow.png" />
+    <Content Include="images\drone.png" />
+    <Content Include="images\electrical1.png" />
+    <Content Include="images\electrical2.png" />
+    <Content Include="images\energy_ball.png" />
+    <Content Include="images\energy_ball2.png" />
+    <Content Include="images\exhaust.png" />
+    <Content Include="images\fence.png" />
+    <Content Include="images\floor.png" />
+    <Content Include="images\floor_pad.png" />
+    <Content Include="images\food.png" />
+    <Content Include="images\food_pouch.png" />
+    <Content Include="images\full_shadow.png" />
+    <Content Include="images\globe.png" />
+    <Content Include="images\globe_shadow.png" />
+    <Content Include="images\gps_module.png" />
+    <Content Include="images\half_shadow.png" />
+    <Content Include="images\hammer.png" />
+    <Content Include="images\lander.png" />
+    <Content Include="images\map.png" />
+    <Content Include="images\mars.png" />
+    <Content Include="images\mirror.png" />
+    <Content Include="images\mission_control_desk.png" />
+    <Content Include="images\mission_control_desk_shadow.png" />
+    <Content Include="images\mp3_player.png" />
+    <Content Include="images\needle.png" />
+    <Content Include="images\pillar.png" />
+    <Content Include="images\pillar_50.png" />
+    <Content Include="images\pillar_60.png" />
+    <Content Include="images\pillar_80.png" />
+    <Content Include="images\pillar_95.png" />
+    <Content Include="images\pillar_low.png" />
+    <Content Include="images\pipes1.png" />
+    <Content Include="images\pipes1_shadow.png" />
+    <Content Include="images\pipes2.png" />
+    <Content Include="images\pipes2_shadow.png" />
+    <Content Include="images\pipes3.png" />
+    <Content Include="images\pipes3_shadow.png" />
+    <Content Include="images\plant.png" />
+    <Content Include="images\plant_shadow.png" />
+    <Content Include="images\positioning_system.png" />
+    <Content Include="images\radio.png" />
+    <Content Include="images\rags.png" />
+    <Content Include="images\rescue_ship.png" />
+    <Content Include="images\rescue_ship_shadow.png" />
+    <Content Include="images\robot.png" />
+    <Content Include="images\robot2.png" />
+    <Content Include="images\robot2_shadow.png" />
+    <Content Include="images\robot_arm.png" />
+    <Content Include="images\robot_arm_shadow.png" />
+    <Content Include="images\robot_shadow.png" />
+    <Content Include="images\rocket.png" />
+    <Content Include="images\rocket_shadow.png" />
+    <Content Include="images\rock_large.png" />
+    <Content Include="images\rock_large_shadow.png" />
+    <Content Include="images\rock_small.png" />
+    <Content Include="images\rock_small_shadow.png" />
+    <Content Include="images\science_lab_table.png" />
+    <Content Include="images\scissors.png" />
+    <Content Include="images\scuttler.png" />
+    <Content Include="images\scuttler_shadow.png" />
+    <Content Include="images\ship.png" />
+    <Content Include="images\shrub.png" />
+    <Content Include="images\shrub_shadow.png" />
+    <Content Include="images\sink.png" />
+    <Content Include="images\sink_shadow.png" />
+    <Content Include="images\soil.png" />
+    <Content Include="images\spacesuit_back.png" />
+    <Content Include="images\spacesuit_back_1.png" />
+    <Content Include="images\spacesuit_back_1_shadow.png" />
+    <Content Include="images\spacesuit_back_2.png" />
+    <Content Include="images\spacesuit_back_2_shadow.png" />
+    <Content Include="images\spacesuit_back_3.png" />
+    <Content Include="images\spacesuit_back_3_shadow.png" />
+    <Content Include="images\spacesuit_back_4.png" />
+    <Content Include="images\spacesuit_back_4_shadow.png" />
+    <Content Include="images\spacesuit_back_shadow.png" />
+    <Content Include="images\spacesuit_front.png" />
+    <Content Include="images\spacesuit_front_1.png" />
+    <Content Include="images\spacesuit_front_1_shadow.png" />
+    <Content Include="images\spacesuit_front_2.png" />
+    <Content Include="images\spacesuit_front_2_shadow.png" />
+    <Content Include="images\spacesuit_front_3.png" />
+    <Content Include="images\spacesuit_front_3_shadow.png" />
+    <Content Include="images\spacesuit_front_4.png" />
+    <Content Include="images\spacesuit_front_4_shadow.png" />
+    <Content Include="images\spacesuit_front_shadow.png" />
+    <Content Include="images\spacesuit_left.png" />
+    <Content Include="images\spacesuit_left_1.png" />
+    <Content Include="images\spacesuit_left_1_shadow.png" />
+    <Content Include="images\spacesuit_left_2.png" />
+    <Content Include="images\spacesuit_left_2_shadow.png" />
+    <Content Include="images\spacesuit_left_3.png" />
+    <Content Include="images\spacesuit_left_3_shadow.png" />
+    <Content Include="images\spacesuit_left_4.png" />
+    <Content Include="images\spacesuit_left_4_shadow.png" />
+    <Content Include="images\spacesuit_left_shadow.png" />
+    <Content Include="images\spacesuit_right.png" />
+    <Content Include="images\spacesuit_right_1.png" />
+    <Content Include="images\spacesuit_right_1_shadow.png" />
+    <Content Include="images\spacesuit_right_2.png" />
+    <Content Include="images\spacesuit_right_2_shadow.png" />
+    <Content Include="images\spacesuit_right_3.png" />
+    <Content Include="images\spacesuit_right_3_shadow.png" />
+    <Content Include="images\spacesuit_right_4.png" />
+    <Content Include="images\spacesuit_right_4_shadow.png" />
+    <Content Include="images\spacesuit_right_shadow.png" />
+    <Content Include="images\spoon.png" />
+    <Content Include="images\table.png" />
+    <Content Include="images\thread.png" />
+    <Content Include="images\threaded_needle.png" />
+    <Content Include="images\toilet.png" />
+    <Content Include="images\toxic_floor.png" />
+    <Content Include="images\toxic_floor2.png" />
+    <Content Include="images\vending_machine.png" />
+    <Content Include="images\whiteboard.png" />
+    <Content Include="images\window.png" />
+    <Content Include="images\yoyo.png" />
+    <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="escape.py" />
+    <Compile Include="listing1-1.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="images" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="env\">
+      <Id>env</Id>
+      <Description>env (Python 3.7 (32-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <Version>3.7</Version>
+      <Architecture>X86</Architecture>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+    </Interpreter>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
