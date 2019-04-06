@@ -434,9 +434,24 @@ def generate_map():
     top_left_x = center_x - 0.5 * room_pixel_width
     top_left_y = (center_y - 0.5 * room_pixel_height) + 110 
 
+    for prop_number, prop_info in props.items():
+        prop_room = prop_info[0]
+        prop_y = prop_info[1]
+        prop_x = prop_info[2]
+        if (prop_room == current_room and room_map[prop_y][prop_x] in [0, 39, 2]):
+            room_map[prop_y][prop_x] = prop_number
+            image_here = objects[prop_number][0]
+            image_width = image_here.get_width()
+            image_width_in_tiles = int(image_width / TILE_SIZE)
+            for tile_number in range(1, image_width_in_tiles):
+                room_map[prop_y][prop_x + tile_number] = 255
+
 #################
 ##  GAME LOOP  ##
 #################
+
+def start_room():
+    show_text("You are here: " + room_name, 0)
 
 def game_loop():
     global player_x, player_y, current_room
@@ -497,7 +512,7 @@ def game_loop():
         player_x = 0 # Enter at left
         player_y = int(room_height / 2) # Enter at door
         player_frame = 0
-        #start_room()
+        start_room()
         return
 
     # Through door on left
@@ -508,7 +523,7 @@ def game_loop():
         player_x = room_width - 1 # Enter at right
         player_y = int(room_height / 2) # Enter at door
         player_frame = 0
-        #start_room()
+        start_room()
         return
 
     # Through door on bottom
@@ -519,7 +534,7 @@ def game_loop():
         player_y = 0 # Enter at top
         player_x = int(room_width / 2) # Enter at door
         player_frame = 0
-        #start_room()
+        start_room()
         return
 
     # Through door at top
@@ -530,9 +545,24 @@ def game_loop():
         player_y = room_height - 1 # Enter at bottom
         player_x = int(room_width / 2) # Enter at door
         player_frame = 0
-        #start_room()
+        start_room()
         return
 
+    if keyboard.g:
+        pick_up_object()
+
+    if keyboard.tab and len(in_my_pockets) > 0:
+        selected_item += 1
+        if selected_item > len(in_my_pockets) - 1:
+            selected_item = 0
+        item_carrying = in_my_pockets[selected_item]
+        display_inventory()
+
+    if keyboard.d and item_carrying:
+        drop_object(old_player_y, old_player_x)
+
+    if keyboard.space:
+        examine_object()
 
     # If the player is standing somewhere they shouldn't, move them back.
     if room_map[player_y][player_x] not in items_player_may_stand_on: # or hazard_map[player_y][player_x] != 0:
@@ -635,10 +665,155 @@ def adjust_wall_transparency():
         and wall_transparency_frame < 4):
         wall_transparency_frame +=1 # Fade wall out
 
-    if ((player_y < room_height - 2)
-        or room_map[room_height - 1][player_x] != 1
+    if ((player_y < room_height - 2
+        or room_map[room_height - 1][player_x] != 1)
         and wall_transparency_frame > 0):
         wall_transparency_frame -= 1 # Fade wall in
+
+def show_text(text_to_show, line_number):
+    if game_over:
+        return
+    text_lines = [15, 50]
+    box = Rect((0, text_lines[line_number]), (800, 35))
+    screen.draw.filled_rect(box, BLACK)
+    screen.draw.text(text_to_show, (20, text_lines[line_number]), color=GREEN)
+
+###############
+##   PROPS   ##
+###############
+
+# Props are objects that may move between rooms, appear or disappear.
+# All props must be set up here. Props not yet in the game go into room 0.
+# object number : [room, y, x]
+props = {
+    20: [31, 0, 4], 21: [26, 0, 1], 22: [41, 0, 2], 23: [39, 0, 5],
+    24: [45, 0, 2],
+    25: [32, 0, 2], 26: [27, 12, 5], # two sides of same door
+    40: [0, 8, 6], 53: [45, 1, 5], 54: [0, 0, 0], 55: [0, 0, 0],
+    56: [0, 0, 0], 57: [35, 4, 6], 58: [0, 0, 0], 59: [31, 1, 7],
+    60: [0, 0, 0], 61: [36, 1, 1], 62: [36, 1, 6], 63: [0, 0, 0],
+    64: [27, 8, 3], 65: [50, 1, 7], 66: [39, 5, 6], 67: [46, 1, 1],
+    68: [0, 0, 0], 69: [30, 3, 3], 70: [47, 1, 3],
+    71: [0, LANDER_Y, LANDER_X], 72: [0, 0, 0], 73: [27, 4, 6], 
+    74: [28, 1, 11], 75: [0, 0, 0], 76: [41, 3, 5], 77: [0, 0, 0],
+    78: [35, 9, 11], 79: [26, 3, 2], 80: [41, 7, 5], 81: [29, 1, 1]
+    }
+
+checksum = 0
+for key, prop in props.items():
+    if key != 71: # 71 is skipped because it's different each game
+        checksum += (prop[0] * key + prop[1] * (key + 1) + prop[2] * (key + 2))
+print(len(props), "props")
+assert len(props) == 37, "Expected 37 prop items"
+print("Prop checksum:", checksum)
+assert checksum == 61414, "Error in props data"
+
+in_my_pockets = [55]
+selected_item = 0 # the first item
+item_carrying = in_my_pockets[selected_item]
+
+#########################
+##  PROP INTERACTIONS  ##
+#########################
+
+def find_object_start_x():
+    checker_x  = player_x
+    while room_map[player_y][checker_x] == 255:
+        checker_x -= 1
+    return checker_x
+
+def get_item_under_player():
+    item_x = find_object_start_x()
+    item_player_is_on = room_map[player_y][item_x]
+    return item_player_is_on
+
+def pick_up_object():
+    global room_map
+    item_player_is_on = get_item_under_player()
+    if item_player_is_on in items_player_may_carry:
+        room_map[player_y][player_x] = get_floor_type()
+        add_object(item_player_is_on)
+        show_text("Now carrying " + objects[item_player_is_on][3], 0)
+        sounds.pickup.play()
+        time.sleep(0.5)
+    else:
+        show_text("You can't carry that!", 0)
+
+def add_object(item): # Adds item to inventory.
+    global selected_item, item_carrying
+    in_my_pockets.append(item)
+    item_carrying = item
+    selected_item = len(in_my_pockets) - 1
+    display_inventory()
+    props[item][0] = 0 # Carried items go into room 0 (off the map).
+
+def display_inventory():
+    box = Rect((0, 45), (800, 150))
+    screen.draw.filled_rect(box, BLACK)
+
+    if len(in_my_pockets) == 0:
+        return
+
+    start_display = (selected_item // 16) * 16
+    list_to_show = in_my_pockets[start_display : start_display + 16]
+    selected_marker = selected_item % 16
+
+    for item_counter in range(len(list_to_show)):
+        item_number = list_to_show[item_counter]
+        image = objects[item_number][0]
+        screen.blit(image, (25 + (46 * item_counter), 90))
+
+    box_left = (selected_marker * 46) - 3
+    box = Rect((22 + box_left, 85), (40, 40))
+    screen.draw.rect(box, WHITE)
+    item_highlighted = in_my_pockets[selected_item]
+    description = objects[item_highlighted][2]
+    screen.draw.text(description, (20, 130), color='white')
+
+def drop_object(old_y, old_x):
+    global room_map, props
+    if room_map[old_y][old_x] in [0, 2, 39]: # Places you can drop things
+        props[item_carrying][0] = current_room
+        props[item_carrying][1] = old_y
+        props[item_carrying][2] = old_x
+        room_map[old_y][old_x] = item_carrying
+        show_text("You have dropped " + objects[item_carrying][3], 0)
+        sounds.drop.play()
+        remove_object(item_carrying)
+        time.sleep(0.5)
+    else: # This only happens if there is already a prop here
+        show_text("You can't drop that there.", 0)
+        time.sleep(0.5)
+
+def remove_object(item): # Takes item out of inventory
+    global selected_item, in_my_pockets, item_carrying
+    in_my_pockets.remove(item)
+    selected_item -= 1
+    if selected_item < 0:
+        selected_item = 0
+    if len(in_my_pockets) == 0: # If they're not carrying anything
+        item_carrying = False
+    else:
+        item_carrying = in_my_pockets[selected_item]
+    display_inventory()
+    
+def examine_object():
+    item_player_is_on = get_item_under_player()
+    left_tile_of_item = find_object_start_x()
+    if item_player_is_on in [0, 2]: # Don't describe the floor
+        return
+    description = "You see: " + objects[item_player_is_on][2]
+    for prop_number, details in props.items():
+        # props = object number: [room number, y, x]
+        if details[0] == current_room: # if prop is in the room
+            if (details[1] == player_y
+                and details[2] == left_tile_of_item
+                and room_map[details[1]][details[2]] != prop_number):
+                add_object(prop_number)
+                description = "You found " + objects[prop_number][3]
+                sounds.combine.play()
+    show_text(description, 0)
+    time.sleep(0.5)
 
 ############
 ##  START ##
@@ -647,4 +822,5 @@ def adjust_wall_transparency():
 clock.schedule_interval(game_loop, 0.03)
 generate_map()
 clock.schedule_interval(adjust_wall_transparency, 0.05)
+clock.schedule_unique(display_inventory, 1)
 pgzrun.go()
