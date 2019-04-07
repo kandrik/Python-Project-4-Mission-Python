@@ -71,6 +71,10 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (128, 0, 0)
 
+air, energy = 100, 100
+suit_stitched, air_fixed = False, False
+launch_frame = 0
+
 #############
 ##   MAP   ##
 #############
@@ -451,7 +455,11 @@ def generate_map():
 #################
 
 def start_room():
+    global airlock_door_frame
     show_text("You are here: " + room_name, 0)
+    if current_room == 26: # Room with self-shutting airlock door
+        airlock_door_frame = 0
+        clock.schedule_interval(door_in_room_26, 0.05)
 
 def game_loop():
     global player_x, player_y, current_room
@@ -563,6 +571,20 @@ def game_loop():
 
     if keyboard.space:
         examine_object()
+
+    if keyboard.u:
+        use_object()
+
+    ## Teleporter for testing purposes
+    ## Remove from final game
+    if keyboard.x:
+        current_room = int(input("Enter room number:"))
+        player_x = 2
+        player_y = 2
+        generate_map()
+        start_room()
+        sounds.teleport.play()
+    ## Teleport section ends
 
     # If the player is standing somewhere they shouldn't, move them back.
     if room_map[player_y][player_x] not in items_player_may_stand_on: # or hazard_map[player_y][player_x] != 0:
@@ -712,6 +734,23 @@ in_my_pockets = [55]
 selected_item = 0 # the first item
 item_carrying = in_my_pockets[selected_item]
 
+RECIPES = [
+    [62, 35, 63], [76, 28, 77], [78, 38, 54], [73, 74, 75],
+    [59, 54, 60], [77, 55, 56], [56, 57, 58], [71, 65, 72],
+    [88, 58, 89], [89, 60, 90], [67, 35, 68]
+    ]
+
+checksum = 0
+check_counter = 1
+for recipe in RECIPES:
+    checksum += (recipe[0] * check_counter + recipe[1] * (check_counter + 1) + recipe[2] * (check_counter + 2))
+    check_counter += 3
+print(len(RECIPES), "recipes")
+assert len(RECIPES) == 11, "Expected 11 recipes"
+assert checksum == 37296, "Error in recipes data"
+print("Recipe checksum:", checksum)
+
+
 #########################
 ##  PROP INTERACTIONS  ##
 #########################
@@ -815,9 +854,264 @@ def examine_object():
     show_text(description, 0)
     time.sleep(0.5)
 
-############
-##  START ##
-############
+###################
+##  USE OBJECTS  ##
+###################
+
+def use_object():
+    global room_map, props, item_carrying, air, selected_item, energy
+    global in_my_pockets, suit_stitched, air_fixed, game_over
+
+    use_message = "You fiddle around with it but don't get anywhere."
+    standard_responses = {
+        4: "Air is running out! You can't take this lying down!",
+        6: "This is no time to sit around!",
+        7: "This is no time to sit around!",
+        32: "It shakes and rumbles, but nothing else happens.",
+        34: "Ah! That's better. Now wash your hands.",
+        35: "You was your hands and shake the water off.",
+        37: "The test tubes smoke slightly as you shake them.",
+        54: "You chew the gum. It's sticky like glue.",
+        56: "It's a bit too fiddly. Can you thread it on something?",
+        59: "You need to fix the leak before you can use the canister.",
+        61: "You try signalling with the mirror, but nobody can see you.",
+        62: "Don't throw resources away. Things might come in handy...",
+        67: "To enjoy yummy space food, just add water!",
+        75: "You are at Sector: " + str(current_room) + " // X: " + str(player_x) + " // Y: " + str(player_y)
+        }
+    # Get object number at player's location.
+    item_player_is_on = get_item_under_player()
+    print("item_player_is_on: " + str(item_player_is_on) + " item_carrying: " + str(item_carrying))
+    for this_item in [item_player_is_on, item_carrying]:
+        if this_item in standard_responses:
+            use_message = standard_responses[this_item]
+
+    if item_carrying == 70 or item_player_is_on == 70:
+        use_message = "Banging tunes!"
+        sounds.steelmusic.play(2)
+
+    elif item_player_is_on == 11:
+        use_message = "AIR: " + str(air) + "% / ENERGY " + str(energy) + "% / "
+        if not suit_stitched:
+            use_message += "*ALERT* SUIT FABRIC TORN / "
+        if not air_fixed:
+            use_message += "*ALERT* SUIT AIR BOTTLE MISSING"
+        if suit_stitched and air_fixed:
+            use_message += " SUIT OK"
+        show_text(use_message, 0)
+        sounds.say_status_report.play()
+        time.sleep(0.5)
+        # If "on" the computer, player intention is clearly status update.
+        # Return to stop another object use accidentally overriding this.
+        return
+
+    elif item_carrying == 60 or item_player_is_on == 60:
+        use_message = "You fix " + objects[60][3] + " to the suit"
+        air_fixed = True
+        air = 90
+        air_countdown()
+        remove_object(60)
+
+    elif item_carrying == 58 or item_player_is_on == 58:
+        use_message = "You use " + objects[58][3] + " to repair the suit fabric"
+        suit_stitched = True
+        remove_object(58)
+
+    elif item_carrying == 72 or item_player_is_on == 72:
+        use_message = "You radio for help. A rescue ship is coming. Rendezvous Sector 13, outside."
+        props[40][0] = 13
+
+    elif (item_carrying == 66 or item_player_is_on == 66) and current_room in outdoor_rooms:
+        use_message = "You dig..."
+        if (current_room == LANDER_SECTOR and player_x == LANDER_X and player_y == LANDER_Y):
+            add_object(71)
+            use_message = "You found the Poodle lander!"
+
+    elif item_player_is_on == 40:
+        clock.unschedule(air_countdown)
+        show_text("Congratulations, " + PLAYER_NAME + "!", 0)
+        show_text("Mission success! You have made it to safety.", 1)
+        game_over = True
+        sounds.take_off.play()
+        game_completion_sequence()
+
+    elif item_player_is_on == 16:
+        energy += 1
+        if energy > 100:
+            energy = 100
+        use_message = "You munch the lettuce and get a little energy back."
+        draw_energy_air()
+
+    elif item_player_is_on == 42:
+        if current_room == 27:
+            open_door(26)
+        props[25][0] = 0 # Door from RM32 to engineering bay
+        props[26][0] = 0 # Door inside engineering bay
+        clock.schedule_unique(shut_engineering_door, 60)
+        use_message = "You press the button"
+        show_text("Door to engineering bay is open for 60 seconds", 1)
+        sounds.say_doors_open.play()
+        sounds.doors.play()
+
+    elif item_carrying == 68 or item_player_is_on == 68:
+        energy = 100
+        use_message = "You use the food to restore your energy."
+        remove_object(68)
+        draw_energy_air()
+
+    if suit_stitched and air_fixed: # Open airlock access
+        if current_room == 31 and props[20][0] == 31:
+            open_door(20) # which includes removing the door
+            sounds.say_airlock_open.play()
+            show_text("The computer tells you the airlock is now open.", 1)
+        elif props[20][0] == 31:
+            props[20][0] = 0 # remove door from map
+            sounds.say_airlock_open.play()
+            show_text("The computer tells you the airlock is now open.", 1)
+
+    for recipe in RECIPES:
+        ingredient1 = recipe[0]
+        ingredient2 = recipe[1]
+        combination = recipe[2]
+        if (item_carrying == ingredient1 and item_player_is_on == ingredient2) \
+            or (item_carrying == ingredient2 and item_player_is_on == ingredient1):
+            use_message = "You combine " +objects[ingredient1][3] + " and " + \
+                objects[ingredient2][3] + " to make " + objects[combination][3]
+            if item_player_is_on in props.keys():
+                props[item_player_is_on][0] = 0
+                room_map[player_y][player_x] = get_floor_type()
+            in_my_pockets.remove(item_carrying)
+            add_object(combination)
+            sounds.combine.play()
+
+    # {key object number: door object number}
+    ACCESS_DICTIONARY = { 79:22, 80:23, 81:24 }
+    if item_carrying in ACCESS_DICTIONARY:
+        door_number = ACCESS_DICTIONARY[item_carrying]
+        if props[door_number][0] == current_room:
+            use_message = "You unlock the door!"
+            sounds.say_doors_open.play()
+            sounds.doors.play()
+            open_door(door_number)
+
+    show_text(use_message, 0)
+    time.sleep(0.5)
+
+def game_completion_sequence():
+    global launch_frame #(initial value is 0, set up in VARIABLES section)
+    box = Rect((0, 150), (800, 600))
+    screen.draw.filled_rect(box, (128, 0, 0))
+    box = Rect((0, top_left_y - 30), (800, 390))
+    screen.surface.set_clip(box)
+
+    for y in range(0, 13):
+        for x in range(0, 13):
+            draw_image(images.soil, y, x)
+
+    launch_frame += 1
+    if launch_frame < 9:
+        draw_image(images.rescue_ship, 8 - launch_frame, 6)
+        draw_shadow(iamges.rescue_ship_shadow, 8 + launch_frame, 6)
+        clock.schedule(game_completion_sequence, 0.25)
+    else:
+        screen.surface.set_clip(None)
+        screen.draw.text("MISSION", (200, 380), color = "white", fontsize = 128, shadow = (1, 1), scolor = "black")
+        screen.draw.text("COMPLETE", (145, 480), color = "white", fontsize = 128, shadow = (1, 1), scolor = "black")
+        sounds.completion.play()
+        sounds.say_mission_complete.play()
+
+#############
+##  DOORS  ##
+#############
+
+def open_door(opening_door_number):
+    global door_frames, door_shadow_frames
+    global door_frame_number, door_object_number
+    door_frames = [images.door1, images.door2, images.door3, images.door4, images.floor]
+    # (Final frame restores shadow ready for when door reappears)
+    door_shadow_frames = [images.door1_shadow, images.door2_shadow,
+                          images.door3_shadow, images.door4_shadow,
+                          images.door_shadow]
+    door_frame_number = 0
+    door_object_number = opening_door_number
+    do_door_animation()
+
+def close_door(closing_door_number):
+    global door_frames, door_shadow_frames
+    global door_frame_number, door_object_number, player_y
+    door_frames = [images.door4, images.door3, images.door2, images.door1, images.door]
+    # (Final frame restores shadow ready for when door reappears)
+    door_shadow_frames = [images.door4_shadow, images.door3_shadow,
+                          images.door2_shadow, images.door1_shadow,
+                          images.door_shadow]
+    door_frame_number = 0
+    door_object_number = closing_door_number
+    # If player is in same row as a door, they must be in open doorway
+    if player_y == props[door_object_number][1]:
+        if player_y == 0: # If in the top doorway
+            payer_y = 1 # move them down
+        else:
+            player_y = room_height - 2 # move them up
+    do_door_animation()
+
+def do_door_animation():
+    global door_frames, door_frame_number, door_object_number, objects
+    objects[door_object_number][0] = door_frames[door_frame_number]
+    objects[door_object_number][1] = door_shadow_frames[door_frame_number]
+    door_frame_number += 1
+    if door_frame_number == 5:
+        if door_frames[-1] == images.floor:
+            props[door_object_number][0] = 0 # remove door from props list
+        # Regenerate room map from the props
+        # to put the door in the room if required.
+        generate_map()
+    else:
+        clock.schedule(do_door_animation, 0.15)
+
+def shut_engineering_door():
+    global current_room, door_room_number, props
+    props[25][0] = 32 # Door from room 32 to engineering bay
+    props[26][0] = 27 # Door inside engineering bay.
+    generate_map()
+    if current_room == 27:
+        close_door(26)
+    if current_room == 32:
+        close_door(25)
+    show_text("The computer tells you the doors are closed.", 1)
+    sounds.say_doors_closed.play()
+
+def door_in_room_26():
+    global airlock_door_frame, room_map
+    frames = [images.door, images.door1, images.door2, images.door3, images.door4, images.floor]
+    shadow_frames = [images.door_shadow, images.door1_shadow, images.door2_shadow, images.door3_shadow, images.door4_shadow, None]
+
+    if current_room != 26:
+        clock.unschedule(door_in_room_26)
+        return
+
+    # prop 21 is the door in Room 26
+    if ((player_y == 8 and player_x == 2) or props[63] == [26, 8, 2]) and props[21][0] == 26:
+        airlock_door_frame += 1
+        if airlock_door_frame == 5:
+            props[21][0] = 0 # Remove door from map when fully open
+            room_map[0][1] = 0
+            room_map[0][2] = 0
+            room_map[0][3] = 0
+
+    if ((player_y != 8 or player_x != 2) and props[63] != [26, 8, 2]) and airlock_door_frame > 0:
+        if airlock_door_frame == 5:
+            # Add door to props and map so animation is shown.
+            props[21][0] = 26
+            room_map[0][1] = 21
+            room_map[0][2] = 255
+            room_map[0][3] = 255
+        airlock_door_frame -= 1
+    objects[21][0] = frames[airlock_door_frame]
+    objects[21][1] = shadow_frames[airlock_door_frame]
+
+#############
+##  START  ##
+#############
 
 clock.schedule_interval(game_loop, 0.03)
 generate_map()
